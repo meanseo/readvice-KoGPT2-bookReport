@@ -1,11 +1,13 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
 import torch
 import transformers
 from transformers import AutoModelWithLMHead, PreTrainedTokenizerFast
 from fastai.text.all import *
 import re
 import fastai
-import re
-from pykospacing import Spacing
 import pandas as pd
 import re
 from icecream import ic
@@ -33,6 +35,7 @@ class Solution():
         dls = self.dataloader(data)
         learn = self.fit(dls)
         self.generate(learn)
+        self.save_model(learn)
         
     def version(self):
         print(torch.__version__)
@@ -61,14 +64,11 @@ class Solution():
         df = df.to_csv('./data/book_report_data.txt', index=False)
 
     def preprocess(self):
-        with open('./data/book_report_data.txt', 'r', encoding='utf-8') as f:
+        with open('data/book_report_preprocess.txt', 'r', encoding='utf-8') as f:
             data = f.read()
         data=" ".join(data.split())
         data = data.replace('\n|\t', ' ')
-        new_sent = data.replace(" ", '')
-        spacing = Spacing()
-        kospacing_sent = spacing(new_sent) 
-        data = re.sub('[-=+,#/\:^$@*\"※~&%ㆍ』\\‘|\(\)\[\]\<\>`\'…》]','', kospacing_sent)
+        data = re.sub('[-=+,#/\:^$@*\"※~&%ㆍ』\\‘|\(\)\[\]\<\>`\'…》]','', data)
         data = re.sub('[a-zA-Z]' , '', data)
         return data
 
@@ -80,8 +80,8 @@ class Solution():
 
         #init dataloader
         tls = TfmdLists([train,test], TransformersTokenizer(self.tokenizer), splits=splits, dl_type=LMDataLoader)
-        seq_len = 8,256
-        dls = tls.dataloaders(bs=4, seq_len=seq_len)
+        batch, seq_len = 4,256
+        dls = tls.dataloaders(bs=batch, seq_len=seq_len)
         return dls
 
     def fit(self, dls):
@@ -89,7 +89,7 @@ class Solution():
         learn = Learner(dls, model, loss_func=CrossEntropyLossFlat(), cbs=[DropOutput], metrics=Perplexity()).to_fp16()
         lr=learn.lr_find()
         print(lr)
-        learn = learn.fit_one_cycle(3, lr)
+        learn.fit_one_cycle(1, lr)
         return learn
     
     def generate(self, learn):
@@ -105,7 +105,8 @@ class Solution():
                                 repetition_penalty=2.0,
                                 use_cache=True
                                 )
-        tokenizer.decode(preds[0].cpu().numpy())
+        result = tokenizer.decode(preds[0].cpu().numpy())
+        print(result)
 
-if __name__ == '__main__':
-    Solution().hook()
+    def save_model(self, learn):
+        learn.model.save_pretrained("./models/oop_test_1")
