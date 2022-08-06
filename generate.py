@@ -33,23 +33,23 @@ print(generated)
 
 import re
 
-with open('./book_report_data.txt', 'r', encoding='utf-8') as f:
+with open('./data/book_report_preprocess.txt', 'r', encoding='utf-8') as f:
     data = f.read()
-data=" ".join(data.split())
+# data=" ".join(data.split())
+# # print(len(data))
+# data = data.replace('\n|\t', ' ')
 # print(len(data))
-data = data.replace('\n|\t', ' ')
-print(len(data))
-# new_sent = data.replace(" ", '') # 띄어쓰기가 없는 문장 임의로 만들기
-# # print(len(new_sent))
-# spacing = Spacing()
-# kospacing_sent = spacing(new_sent) 
-# print(len(kospacing_sent))
-data = re.sub('[-=+,#/\:^$@*\"※~&%ㆍ』\\‘|\(\)\[\]\<\>`\'…》]','', data)
-print(len(data))
-data = re.sub('[a-zA-Z]' , '', data)
-print(len(data))
-# UnicodeDecodeError: 'cp949' codec can't decode byte 0xec in position 20: illegal multibyte sequence
-# 해당 에러 ->  encoding='utf-8' 넣어 주기
+# # new_sent = data.replace(" ", '') # 띄어쓰기가 없는 문장 임의로 만들기
+# # # print(len(new_sent))
+# # spacing = Spacing()
+# # kospacing_sent = spacing(new_sent) 
+# # print(len(kospacing_sent))
+# data = re.sub('[-=+,#/\:^$@*\"※~&%ㆍ』\\‘|\(\)\[\]\<\>`\'…》]','', data)
+# print(len(data))
+# data = re.sub('[a-zA-Z]' , '', data)
+# print(len(data))
+# # UnicodeDecodeError: 'cp949' codec can't decode byte 0xec in position 20: illegal multibyte sequence
+# # 해당 에러 ->  encoding='utf-8' 넣어 주기
 
 
 #model input output tokenizer

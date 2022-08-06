@@ -11,6 +11,7 @@ import fastai
 import pandas as pd
 import re
 from icecream import ic
+from pykospacing import Spacing
 
 class TransformersTokenizer(Transform):
     def __init__(self, tokenizer): self.tokenizer = tokenizer
@@ -31,11 +32,11 @@ class Solution():
     def hook(self):
         # self.version()
         # self.csv_to_txt()
-        data = self.preprocess()
-        dls = self.dataloader(data)
+        # data = self.preprocess()
+        dls = self.dataloader()
         learn = self.fit(dls)
         self.generate(learn)
-        self.save_model(learn)
+        # self.save_model(learn)
         
     def version(self):
         print(torch.__version__)
@@ -55,24 +56,31 @@ class Solution():
                                 bos_token_id=tokenizer.bos_token_id,
                                 use_cache=True
                                 )
-        generated = tokenizer.decode(gen_ids[0,:].tolist())
+        generated = tokenizer.decode(gen_ids[0, :].tolist())
         print(generated)
     
     def csv_to_txt(self):
-        df = pd.read_csv('./data/book_report_data.csv', index_col=0)
+        df = pd.read_csv('data/book_report_data.csv', index_col=0)
         df.drop_duplicates(keep='first', inplace=True, ignore_index=False)
-        df = df.to_csv('./data/book_report_data.txt', index=False)
+        df = df.to_csv('../data/book_report_data.txt', index=False)
 
     def preprocess(self):
-        with open('data/book_report_preprocess.txt', 'r', encoding='utf-8') as f:
+        spacing = Spacing()
+        with open('data/book_report_data.txt', 'r', encoding='utf-8') as f:
             data = f.read()
         data=" ".join(data.split())
         data = data.replace('\n|\t', ' ')
+        data = data.replace(" ",'')
+        data = spacing(data)
         data = re.sub('[-=+,#/\:^$@*\"※~&%ㆍ』\\‘|\(\)\[\]\<\>`\'…》]','', data)
         data = re.sub('[a-zA-Z]' , '', data)
+        with open('data/book_report_preprocess.txt') as f:
+            f.write(data)
         return data
 
-    def dataloader(self, data):
+    def dataloader(self):
+        with open('data/book_report_preprocess.txt', 'r', encoding='utf-8') as f:
+            data = f.read()
         #split data
         train=data[:int(len(data)*0.9)]
         test=data[int(len(data)*0.9):]
@@ -80,7 +88,7 @@ class Solution():
 
         #init dataloader
         tls = TfmdLists([train,test], TransformersTokenizer(self.tokenizer), splits=splits, dl_type=LMDataLoader)
-        batch, seq_len = 4,256
+        batch, seq_len = 4, 256
         dls = tls.dataloaders(bs=batch, seq_len=seq_len)
         return dls
 
@@ -109,4 +117,4 @@ class Solution():
         print(result)
 
     def save_model(self, learn):
-        learn.model.save_pretrained("./models/oop_test_1")
+        learn.model.save_pretrained("./models/generate_model")
